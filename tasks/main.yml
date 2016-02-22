@@ -1,0 +1,37 @@
+---
+# tasks file for ansible-zabbix-server
+
+- name: fetch the zabbix source | {{ inventory_hostname }}
+  get_url: url={{ zabbix_src }} dest=/usr/local/src/{{ zabbix_src_tarball }}
+  become: yes
+
+- name: extract zabbix source | {{ inventory_hostname }}
+  unarchive: src=/usr/local/src/{{ zabbix_src_tarball }} dest=/usr/local/src copy=no creates=/usr/local/src/{{ zabbix_src_basename }}/aclocal.m4
+  become: yes
+
+- name: configure zabbix agent | {{ inventory_hostname }}
+  shell: ./configure --enable-agent chdir=/usr/local/src/{{ zabbix_src_basename }} creates=config.log
+  register: configure_ok
+  become: yes
+
+- name: make install zabbix agent | {{ inventory_hostname }}
+  shell: make install chdir=/usr/local/src/{{ zabbix_src_basename }} creates=/usr/local/sbin/zabbix_agentd
+  when: configure_ok.rc == 0
+  become: yes
+
+- name: deploy zabbix agent init script | {{ inventory_hostname }}
+  copy: src=zabbix-agent dest=/etc/init.d/zabbix-agent owner=root group=root mode=0755
+  become: yes
+
+- name: chkconfig add the zabbix agent | {{ inventory_hostname }}
+  shell: chkconfig --add zabbix-agent creates=/etc/rc3.d/S86zabbix-agent
+  become: yes
+
+- name: deploy /usr/local/etc/zabbix_agentd.conf | {{ inventory_hostname }}
+  template: src=zabbix_agentd.conf.j2 dest=/usr/local/etc/zabbix_agentd.conf
+  notify: restart-zabbix-agentd
+  become: yes
+
+- name: start and enable zabbix-agent | {{ inventory_hostname }}
+  service: name=zabbix-agent state=started enabled=yes
+  become: yes

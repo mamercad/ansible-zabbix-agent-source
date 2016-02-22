@@ -1,0 +1,7 @@
+---
+# vars file for ansible-zabbix-agent-source
+
+zabbix_src: http://sourceforge.net/projects/zabbix/files/ZABBIX%20Latest%20Stable/3.0.0/zabbix-3.0.0.tar.gz/download
+zabbix_src_tarball: zabbix-3.0.0.tar.gz
+zabbix_src_basename: zabbix-3.0.0
+zabbix_server: zabbix.localdomain
